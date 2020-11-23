@@ -56,7 +56,7 @@ def mkdir(dir_path):
     os.makedirs(dir_path, exist_ok=True)
 
 if __name__ == "__main__":
-    d = {'Name': 'Testing', 'Arr': [1, 2, 3], '測試': '項目'}
+    d = {'Name': 'Testing', 'Arr': [1, 2, 3], '测试': '项目'}
     dump(d, 'a.json', is_ascii=True)
     # dump_json(d, './a.json')
     # dd = load_json('./a.json')
