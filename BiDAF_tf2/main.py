@@ -64,7 +64,6 @@ class BiDAF:
         self.num_decoders = num_decoders
         self.decoder_dropout = decoder_dropout
 
-
     def build_model(self):
         """
         构建模型
