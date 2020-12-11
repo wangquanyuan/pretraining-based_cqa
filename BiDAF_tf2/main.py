@@ -12,6 +12,7 @@ import layers
 import preprocess
 import numpy as np
 
+
 print("tf.__version__:", tf.__version__)
 gpus = tf.config.experimental.list_physical_devices('GPU')
 if gpus:
