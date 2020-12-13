@@ -2,27 +2,33 @@ import numpy as np
 import data_io as pio
 from nltk.tokenize import WordPunctTokenizer
 
+from tqdm import tqdm
 """
-[['aaa', 'bbbb'],['ccc','ddd']]
-[[['a','a','a'],['b','b','b','b']],[['c','c','c'],['d','d','d']]]
+word: [['aaa', 'bbbb'],['ccc','ddd']]
+char: [[['a','a','a'],['b','b','b','b']],[['c','c','c'],['d','d','d']]]
 """
 
-GLOVE_FILE_PATH = ".\data\glove\glove.6B.50d.txt"
+# GLOVE_FILE_PATH = ".\data\glove\glove.6B.50d.txt"
 class Preprocessor:
     def __init__(self, datasets_fp, max_length=384, stride=128):
         self.datasets_fp = datasets_fp
         self.max_length = max_length
-        self.max_clen = 100
-        self.max_qlen = 100
-        self.max_char_len = 16
+        # 为了在本地测试，这里把max_clen和max_qlen都设置小一点
+        self.max_clen = 25
+        self.max_qlen = 25
         self.stride = stride
-        self.charset = set()
-        self.embeddings_index = {}
-        self.embedding_matrix = []
-        self.word_list = []
-        self.build_charset()
-        self.load_glove(GLOVE_FILE_PATH)
-        self.build_wordset()
+        print('loading bert-as-server...')
+        self.bc = BertClient(ip='')
+
+        # self.max_char_len = 16
+        # self.max_char_len = 16
+        # self.charset = set()
+        # self.embeddings_index = {}
+        # self.embedding_matrix = []
+        # self.word_list = []
+        # self.build_charset()
+        # self.load_glove(GLOVE_FILE_PATH)
+        # self.build_wordset()
 
     def build_charset(self):
         for fp in self.datasets_fp:

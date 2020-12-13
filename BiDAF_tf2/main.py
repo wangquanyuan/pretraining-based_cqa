@@ -30,15 +30,18 @@ if gpus:
 class BiDAF:
 
     def __init__(
-            self, clen, qlen, max_char_len, emb_size,
-            vocab_size,
-            embedding_matrix,
-            conv_layers = [],
+            self, clen, qlen, emb_size,
             max_features=5000,
             num_highway_layers=2,
             encoder_dropout=0,
             num_decoders=2,
             decoder_dropout=0,
+            
+            # charCNN的参数
+            # max_char_len, 
+            # vocab_size,
+            # embedding_matrix,
+            # conv_layers = [],
     ):
         """
         双向注意流模型
@@ -53,16 +56,18 @@ class BiDAF:
         """
         self.clen = clen
         self.qlen = qlen
-        self.max_char_len = max_char_len
         self.max_features = max_features
         self.emb_size = emb_size
-        self.vocab_size = vocab_size
-        self.embedding_matrix = embedding_matrix
-        self.conv_layers = conv_layers
         self.num_highway_layers = num_highway_layers
         self.encoder_dropout = encoder_dropout
         self.num_decoders = num_decoders
         self.decoder_dropout = decoder_dropout
+        """
+        self.max_char_len = max_char_len
+        self.embedding_matrix = embedding_matrix
+        self.vocab_size = vocab_size
+        self.conv_layers = conv_layers
+        """
 
     def build_model(self):
         """
@@ -70,6 +75,8 @@ class BiDAF:
         :return:
         """
         # 1. embedding 层
+        """
+        #charcnn 和 bert as server 拼接来编码词向量
         cinn_c = tf.keras.layers.Input(shape=(self.clen,self.max_char_len), name='context_input_char')
         qinn_c = tf.keras.layers.Input(shape=(self.qlen,self.max_char_len), name='question_input_char')
         embedding_layer_char = tf.keras.layers.Embedding(self.max_features, self.emb_size, embeddings_initializer='uniform')
@@ -104,6 +111,14 @@ class BiDAF:
         cemb = tf.concat([emb_cw, c_conv_out], axis=2)
         qemb = tf.concat([emb_qw, q_conv_out], axis=2)
         print('cemb',cemb.shape)
+        """
+        # 为了便于实现，这里和论文有些区别，
+        cinn = tf.keras.layers.Input(shape=(self.clen, self.emb_size), name='context_input')
+        qinn = tf.keras.layers.Input(shape=(self.qlen, self.emb_size), name='question_input')
+
+        cemb = cinn
+        qemb = qinn
+
         for i in range(self.num_highway_layers):
             """
             使用两层高速神经网络
@@ -243,6 +258,7 @@ if __name__ == '__main__':
         './data/squad/dev-v1.1.json',
         './data/squad/dev-v1.1.json'
     ])
+    """
     # train_c, train_q, train_y = ds.get_dataset_char('./data/squad/train-v1.1.json')
     # test_c, test_q, test_y = ds.get_dataset_char('./data/squad/dev-v1.1.json')
 
@@ -272,4 +288,26 @@ if __name__ == '__main__':
         batch_size=128,
         epochs=1,
         validation_data=([test_cc, test_qc, test_cw, test_qw], test_y)
+    )
+    """
+    # 训练时改输入数据
+    # train_c, train_q, train_y = ds.get_dataset('./data/squad/train-v1.1.json')
+    # test_c, test_q, test_y = ds.get_dataset('./data/squad/dev-v1.1.json')
+    train_c, train_q, train_y = ds.get_dataset('./data/squad/test.json', data_type='train')
+    test_c, test_q, test_y = ds.get_dataset('./data/squad/test.json', data_type='test')
+    # print(train_c.shape, train_q.shape, train_y.shape)
+    print(test_c.shape, test_q.shape, test_y.shape)
+
+    bidaf = BiDAF(
+        clen=ds.max_clen,
+        qlen=ds.max_qlen,
+        emb_size=768,
+        # word_emb_size=768,
+    )
+    bidaf.build_model()
+    bidaf.model.fit(
+        [train_c, train_q], train_y,
+        batch_size=64,
+        epochs=10,
+        validation_data=([test_c, test_q], test_y)
     )
